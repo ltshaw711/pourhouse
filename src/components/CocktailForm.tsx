@@ -343,12 +343,12 @@ function CocktailFormFields({
         />
       </label>
 
-      <label className="flex items-center gap-2 text-sm text-zinc-300">
+      <label className="flex cursor-pointer items-center gap-2 py-2 text-sm text-zinc-300">
         <input
           type="checkbox"
           name="favorite"
           defaultChecked={initial?.favorite}
-          className="accent-orange-500"
+          className="h-4 w-4 accent-orange-500"
         />
         Mark as favorite
       </label>
