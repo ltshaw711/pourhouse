@@ -38,3 +38,17 @@ export async function getTagsByCocktail(
 
   return tagsByCocktail;
 }
+
+/** Canonical primary/style tags for the add/edit form's checkboxes. */
+export async function getFormTags(supabase: SupabaseClient<Database>) {
+  const { data: tags } = await supabase
+    .from("tags")
+    .select("id, name, type")
+    .in("type", ["primary", "style"])
+    .order("name");
+
+  return {
+    primaryTags: (tags ?? []).filter((t) => t.type === "primary"),
+    styleTags: (tags ?? []).filter((t) => t.type === "style"),
+  };
+}

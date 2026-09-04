@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getTagsByCocktail } from "@/lib/cocktail-tags";
 import { gradientFor } from "@/lib/gradient";
-import { deleteCocktail } from "../actions";
+import { deleteCocktail, setFavorite } from "../actions";
 import { DeleteCocktailButton } from "./DeleteCocktailButton";
 
 // Cocktail detail — PRD §7 / §6.2
@@ -41,6 +41,7 @@ export default async function CocktailDetailPage({
   const styleTags = tags.filter((t) => t.type === "style");
 
   const deleteThisCocktail = deleteCocktail.bind(null, cocktail.id);
+  const toggleFavorite = setFavorite.bind(null, cocktail.id, !cocktail.favorite);
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">
@@ -63,7 +64,7 @@ export default async function CocktailDetailPage({
         }
       />
 
-      <div className="mt-6 flex items-start justify-between gap-4">
+      <div className="mt-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl font-semibold text-zinc-50">
             {cocktail.name}
@@ -77,7 +78,25 @@ export default async function CocktailDetailPage({
             <p className="mt-2 text-zinc-400">{cocktail.description}</p>
           )}
         </div>
-        <DeleteCocktailButton action={deleteThisCocktail} />
+        <div className="flex flex-wrap items-center gap-2">
+          <form action={toggleFavorite}>
+            <button
+              type="submit"
+              aria-pressed={cocktail.favorite}
+              title={cocktail.favorite ? "Remove from favorites" : "Add to favorites"}
+              className="rounded-full border border-zinc-700 px-3 py-1.5 text-sm text-zinc-200 hover:border-zinc-500"
+            >
+              {cocktail.favorite ? "★ Favorited" : "☆ Favorite"}
+            </button>
+          </form>
+          <Link
+            href={`/cocktails/${cocktail.id}/edit`}
+            className="rounded-full border border-zinc-700 px-4 py-1.5 text-sm text-zinc-200 hover:border-zinc-500"
+          >
+            Edit
+          </Link>
+          <DeleteCocktailButton action={deleteThisCocktail} />
+        </div>
       </div>
 
       {(primaryTags.length > 0 || styleTags.length > 0) && (

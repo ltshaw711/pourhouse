@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
+import { getFormTags } from "@/lib/cocktail-tags";
 import { createCocktail } from "../actions";
-import { CocktailForm } from "./CocktailForm";
+import { CocktailForm } from "@/components/CocktailForm";
 
 // Add cocktail — PRD §6.5
 export default async function NewCocktailPage({
@@ -10,15 +11,7 @@ export default async function NewCocktailPage({
 }) {
   const { error } = await searchParams;
   const supabase = await createClient();
-
-  const { data: tags } = await supabase
-    .from("tags")
-    .select("id, name, type")
-    .in("type", ["primary", "style"])
-    .order("name");
-
-  const primaryTags = (tags ?? []).filter((t) => t.type === "primary");
-  const styleTags = (tags ?? []).filter((t) => t.type === "style");
+  const { primaryTags, styleTags } = await getFormTags(supabase);
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-12">

@@ -4,28 +4,68 @@ import { useState } from "react";
 
 type Tag = { id: string; name: string };
 
-type IngredientRow = { key: number };
+type IngredientRow = {
+  key: number;
+  display_name?: string;
+  amount?: string;
+  unit?: string;
+  qualifier?: string;
+};
 
 let nextRowKey = 0;
-function newRow(): IngredientRow {
-  return { key: nextRowKey++ };
+function newRow(initial?: Omit<IngredientRow, "key">): IngredientRow {
+  return { key: nextRowKey++, ...initial };
 }
 
 const fieldClass =
   "rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-50 outline-none focus:border-orange-400";
 
+export type CocktailFormInitial = {
+  name?: string;
+  instructions?: string;
+  garnish?: string;
+  glassware?: string;
+  source?: string;
+  favorite?: boolean;
+  ingredients?: {
+    display_name: string;
+    amount: number | null;
+    unit: string | null;
+    qualifier: string | null;
+  }[];
+  tagIds?: string[];
+};
+
 export function CocktailForm({
   action,
   primaryTags,
   styleTags,
+  initial,
+  submitLabel = "Save cocktail",
 }: {
   action: (formData: FormData) => void;
   primaryTags: Tag[];
   styleTags: Tag[];
+  initial?: CocktailFormInitial;
+  submitLabel?: string;
 }) {
   // Only the row *count and identity* is client state — each row's text
-  // stays an uncontrolled input, so typing never re-renders the form.
-  const [rows, setRows] = useState<IngredientRow[]>([newRow(), newRow(), newRow()]);
+  // stays an uncontrolled input (seeded via defaultValue), so typing never
+  // re-renders the form.
+  const [rows, setRows] = useState<IngredientRow[]>(() =>
+    initial?.ingredients?.length
+      ? initial.ingredients.map((ing) =>
+          newRow({
+            display_name: ing.display_name,
+            amount: ing.amount != null ? String(ing.amount) : "",
+            unit: ing.unit ?? "",
+            qualifier: ing.qualifier ?? "",
+          })
+        )
+      : [newRow(), newRow(), newRow()]
+  );
+
+  const selectedTagIds = new Set(initial?.tagIds ?? []);
 
   return (
     <form action={action} className="flex flex-col gap-8">
@@ -33,7 +73,13 @@ export function CocktailForm({
         <span>
           Cocktail name <span className="text-orange-400">*</span>
         </span>
-        <input name="name" required className={fieldClass} placeholder="Last Word" />
+        <input
+          name="name"
+          required
+          defaultValue={initial?.name}
+          className={fieldClass}
+          placeholder="Last Word"
+        />
       </label>
 
       <div>
@@ -53,22 +99,26 @@ export function CocktailForm({
               <input
                 name="ingredient_display_name"
                 placeholder="Ingredient (e.g. gin)"
+                defaultValue={row.display_name}
                 className={`${fieldClass} min-w-[9rem] flex-1`}
               />
               <input
                 name="ingredient_amount"
                 placeholder="2"
                 inputMode="decimal"
+                defaultValue={row.amount}
                 className={`${fieldClass} w-16 shrink-0`}
               />
               <input
                 name="ingredient_unit"
                 placeholder="oz"
+                defaultValue={row.unit}
                 className={`${fieldClass} w-16 shrink-0`}
               />
               <input
                 name="ingredient_qualifier"
                 placeholder="Note (e.g. fresh)"
+                defaultValue={row.qualifier}
                 className={`${fieldClass} min-w-[9rem] flex-1`}
               />
               <button
@@ -96,6 +146,7 @@ export function CocktailForm({
         <textarea
           name="instructions"
           rows={4}
+          defaultValue={initial?.instructions}
           className={fieldClass}
           placeholder="Shake with ice, double strain into a coupe."
         />
@@ -104,11 +155,21 @@ export function CocktailForm({
       <div className="grid grid-cols-2 gap-4">
         <label className="flex flex-col gap-1 text-sm text-zinc-300">
           Garnish
-          <input name="garnish" className={fieldClass} placeholder="Lemon twist" />
+          <input
+            name="garnish"
+            defaultValue={initial?.garnish}
+            className={fieldClass}
+            placeholder="Lemon twist"
+          />
         </label>
         <label className="flex flex-col gap-1 text-sm text-zinc-300">
           Glassware
-          <input name="glassware" className={fieldClass} placeholder="Coupe" />
+          <input
+            name="glassware"
+            defaultValue={initial?.glassware}
+            className={fieldClass}
+            placeholder="Coupe"
+          />
         </label>
       </div>
 
@@ -125,6 +186,7 @@ export function CocktailForm({
                   type="checkbox"
                   name="tag_ids"
                   value={tag.id}
+                  defaultChecked={selectedTagIds.has(tag.id)}
                   className="sr-only"
                 />
                 {tag.name}
@@ -147,6 +209,7 @@ export function CocktailForm({
                   type="checkbox"
                   name="tag_ids"
                   value={tag.id}
+                  defaultChecked={selectedTagIds.has(tag.id)}
                   className="sr-only"
                 />
                 {tag.name}
@@ -160,13 +223,19 @@ export function CocktailForm({
         Source
         <input
           name="source"
+          defaultValue={initial?.source}
           className={fieldClass}
           placeholder="e.g. Apple Notes, a book, a bar you loved"
         />
       </label>
 
       <label className="flex items-center gap-2 text-sm text-zinc-300">
-        <input type="checkbox" name="favorite" className="accent-orange-500" />
+        <input
+          type="checkbox"
+          name="favorite"
+          defaultChecked={initial?.favorite}
+          className="accent-orange-500"
+        />
         Mark as favorite
       </label>
 
@@ -174,7 +243,7 @@ export function CocktailForm({
         type="submit"
         className="self-start rounded-full bg-orange-500 px-5 py-2 text-sm font-medium text-zinc-950 hover:bg-orange-400"
       >
-        Save cocktail
+        {submitLabel}
       </button>
     </form>
   );
