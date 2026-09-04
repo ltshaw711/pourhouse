@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { buildIngredientMatcher } from "@/lib/ingredient-matching";
 
 // Ingredient rows arrive as several same-named fields
 // (ingredient_display_name, ingredient_amount, ...) — the browser submits
@@ -64,6 +65,15 @@ export async function createCocktail(formData: FormData) {
     );
   }
 
+  // Links each line to the canonical ingredients table on an exact
+  // name/alias match, so ingredient-on-hand search can find it — see
+  // src/lib/ingredient-matching.ts for what counts as a match.
+  const matchIngredient = await buildIngredientMatcher(supabase);
+  const linkedIngredientRows = ingredientRows.map((row) => ({
+    ...row,
+    canonical_ingredient_id: matchIngredient(row.display_name),
+  }));
+
   const { data: cocktail, error: cocktailError } = await supabase
     .from("cocktails")
     .insert({ ...fields, owner_id: user.id, status: "published" })
@@ -80,7 +90,7 @@ export async function createCocktail(formData: FormData) {
 
   const { error: ingredientsError } = await supabase
     .from("recipe_ingredients")
-    .insert(ingredientRows.map((row) => ({ ...row, cocktail_id: cocktail.id })));
+    .insert(linkedIngredientRows.map((row) => ({ ...row, cocktail_id: cocktail.id })));
 
   if (ingredientsError) {
     redirect(`/cocktails/new?error=${encodeURIComponent(ingredientsError.message)}`);
@@ -125,6 +135,12 @@ export async function updateCocktail(cocktailId: string, formData: FormData) {
     redirect(`${editUrl}?error=${encodeURIComponent("Add at least one ingredient.")}`);
   }
 
+  const matchIngredient = await buildIngredientMatcher(supabase);
+  const linkedIngredientRows = ingredientRows.map((row) => ({
+    ...row,
+    canonical_ingredient_id: matchIngredient(row.display_name),
+  }));
+
   const { error: updateError } = await supabase
     .from("cocktails")
     .update(fields)
@@ -147,7 +163,7 @@ export async function updateCocktail(cocktailId: string, formData: FormData) {
 
   const { error: ingredientsError } = await supabase
     .from("recipe_ingredients")
-    .insert(ingredientRows.map((row) => ({ ...row, cocktail_id: cocktailId })));
+    .insert(linkedIngredientRows.map((row) => ({ ...row, cocktail_id: cocktailId })));
 
   if (ingredientsError) {
     redirect(`${editUrl}?error=${encodeURIComponent(ingredientsError.message)}`);

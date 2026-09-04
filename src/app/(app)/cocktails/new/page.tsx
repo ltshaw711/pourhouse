@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getFormTags } from "@/lib/cocktail-tags";
+import { getIngredientOptions } from "@/lib/ingredient-matching";
 import { createCocktail } from "../actions";
 import { CocktailForm } from "@/components/CocktailForm";
 
@@ -11,7 +12,10 @@ export default async function NewCocktailPage({
 }) {
   const { error } = await searchParams;
   const supabase = await createClient();
-  const { primaryTags, styleTags } = await getFormTags(supabase);
+  const [{ primaryTags, styleTags }, ingredientOptions] = await Promise.all([
+    getFormTags(supabase),
+    getIngredientOptions(supabase),
+  ]);
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-12">
@@ -31,6 +35,7 @@ export default async function NewCocktailPage({
           action={createCocktail}
           primaryTags={primaryTags}
           styleTags={styleTags}
+          ingredientOptions={ingredientOptions}
         />
       </div>
     </main>

@@ -40,12 +40,14 @@ export function CocktailForm({
   action,
   primaryTags,
   styleTags,
+  ingredientOptions,
   initial,
   submitLabel = "Save cocktail",
 }: {
   action: (formData: FormData) => void;
   primaryTags: Tag[];
   styleTags: Tag[];
+  ingredientOptions: string[];
   initial?: CocktailFormInitial;
   submitLabel?: string;
 }) {
@@ -88,8 +90,16 @@ export function CocktailForm({
         </p>
         <p className="mt-0.5 text-xs text-zinc-500">
           At least one is required. Amount, unit, and note are optional —
-          unusual measurements are fine as free text.
+          unusual measurements are fine as free text. Matching a suggested
+          name links it to the canonical ingredient, which is what powers
+          ingredient-on-hand search — typing something else is fine too, it
+          just will not be searchable that way yet.
         </p>
+        <datalist id="ingredient-options">
+          {ingredientOptions.map((name) => (
+            <option key={name} value={name} />
+          ))}
+        </datalist>
         <div className="mt-3 flex flex-col gap-3">
           {rows.map((row) => (
             <div
@@ -100,6 +110,7 @@ export function CocktailForm({
                 name="ingredient_display_name"
                 placeholder="Ingredient (e.g. gin)"
                 defaultValue={row.display_name}
+                list="ingredient-options"
                 className={`${fieldClass} min-w-[9rem] flex-1`}
               />
               <input

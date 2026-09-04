@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getFormTags, getTagsByCocktail } from "@/lib/cocktail-tags";
+import { getIngredientOptions } from "@/lib/ingredient-matching";
 import { updateCocktail } from "../../actions";
 import { CocktailForm } from "@/components/CocktailForm";
 
@@ -30,9 +31,10 @@ export default async function EditCocktailPage({
     .eq("cocktail_id", id)
     .order("position");
 
-  const [{ primaryTags, styleTags }, tagsByCocktail] = await Promise.all([
+  const [{ primaryTags, styleTags }, tagsByCocktail, ingredientOptions] = await Promise.all([
     getFormTags(supabase),
     getTagsByCocktail(supabase, [id]),
+    getIngredientOptions(supabase),
   ]);
 
   const updateThisCocktail = updateCocktail.bind(null, cocktail.id);
@@ -52,6 +54,7 @@ export default async function EditCocktailPage({
           action={updateThisCocktail}
           primaryTags={primaryTags}
           styleTags={styleTags}
+          ingredientOptions={ingredientOptions}
           submitLabel="Save changes"
           initial={{
             name: cocktail.name,
