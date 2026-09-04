@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { DeleteAccountForm } from "./DeleteAccountForm";
 
@@ -17,6 +18,23 @@ export default async function SettingsPage() {
           Account
         </h2>
         <p className="mt-2 text-zinc-300">{user?.email}</p>
+      </section>
+
+      <section className="mt-10">
+        <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-400">
+          Ingredients
+        </h2>
+        <p className="mt-2 max-w-prose text-sm text-zinc-400">
+          Manage the canonical ingredient list — what shows up on the
+          &ldquo;What can you make?&rdquo; page and what a recipe&rsquo;s
+          ingredients can link to.
+        </p>
+        <Link
+          href="/settings/ingredients"
+          className="mt-3 inline-block rounded-full border border-zinc-700 px-4 py-1.5 text-sm text-zinc-200 hover:border-zinc-500"
+        >
+          Manage ingredients
+        </Link>
       </section>
 
       <section className="mt-10">
