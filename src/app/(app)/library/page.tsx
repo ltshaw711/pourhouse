@@ -92,7 +92,7 @@ export default async function LibraryPage({
       {collectionIsEmpty ? (
         <div className="mt-16 flex flex-col items-center gap-3 text-center">
           <p className="text-lg text-zinc-300">Your collection is empty.</p>
-          <p className="max-w-sm text-sm text-zinc-500">
+          <p className="max-w-sm text-sm text-zinc-400">
             Add your first cocktail to start building your library, or
             import an existing Apple Notes folder once imports are live.
           </p>
@@ -106,7 +106,7 @@ export default async function LibraryPage({
       ) : rows.length === 0 ? (
         <div className="mt-16 flex flex-col items-center gap-2 text-center">
           <p className="text-lg text-zinc-300">No cocktails match these filters.</p>
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-zinc-400">
             Try a different search or clear filters to see everything.
           </p>
         </div>

@@ -77,7 +77,7 @@ export function LibraryFilters({
           onChange={(e) => handleQueryChange(e.target.value)}
           placeholder="Search by name…"
           aria-label="Search cocktails by name"
-          className="w-full max-w-xs rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-50 outline-none focus:border-orange-400"
+          className="w-full max-w-xs rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-50 outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/40"
         />
         <button
           type="button"
@@ -95,7 +95,7 @@ export function LibraryFilters({
           <button
             type="button"
             onClick={clearFilters}
-            className="shrink-0 text-xs text-zinc-500 hover:text-zinc-300"
+            className="shrink-0 text-xs text-zinc-400 hover:text-zinc-300"
           >
             Clear filters
           </button>

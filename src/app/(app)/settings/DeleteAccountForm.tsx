@@ -14,7 +14,7 @@ export function DeleteAccountForm() {
           name="confirm"
           required
           autoComplete="off"
-          className="w-40 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-50 outline-none focus:border-red-500"
+          className="w-40 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-50 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/40"
         />
       </label>
 

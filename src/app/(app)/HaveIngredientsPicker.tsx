@@ -33,7 +33,7 @@ export function HaveIngredientsPicker({ ingredients }: { ingredients: Ingredient
           <button
             type="button"
             onClick={() => router.replace(pathname)}
-            className="text-xs text-zinc-500 hover:text-zinc-300"
+            className="text-xs text-zinc-400 hover:text-zinc-300"
           >
             Clear
           </button>

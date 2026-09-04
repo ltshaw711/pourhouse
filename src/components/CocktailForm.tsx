@@ -21,7 +21,7 @@ function newRow(initial?: Omit<IngredientRow, "key">): IngredientRow {
 }
 
 const fieldClass =
-  "rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-50 outline-none focus:border-orange-400";
+  "rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-50 outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/40";
 
 type CocktailFormAction = (
   state: CocktailActionState,
@@ -191,7 +191,7 @@ function CocktailFormFields({
         <p className="text-sm text-zinc-300">
           Ingredients <span className="text-orange-400">*</span>
         </p>
-        <p className="mt-0.5 text-xs text-zinc-500">
+        <p className="mt-0.5 text-xs text-zinc-400">
           At least one is required. Amount, unit, and note are optional —
           unusual measurements are fine as free text. Matching a suggested
           name links it to the canonical ingredient, which is what powers
@@ -239,7 +239,7 @@ function CocktailFormFields({
                 type="button"
                 aria-label="Remove ingredient"
                 onClick={() => setRows((r) => r.filter((x) => x.key !== row.key))}
-                className="shrink-0 rounded-md px-2 py-2 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200"
+                className="shrink-0 rounded-md px-2 py-2 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
               >
                 ✕
               </button>
@@ -294,7 +294,7 @@ function CocktailFormFields({
             {primaryTags.map((tag) => (
               <label
                 key={tag.id}
-                className="flex cursor-pointer items-center gap-1.5 rounded-full border border-zinc-700 px-3 py-1 text-xs text-zinc-200 has-[:checked]:border-orange-400 has-[:checked]:text-orange-300"
+                className="flex cursor-pointer items-center gap-1.5 rounded-full border border-zinc-700 px-3 py-1 text-xs text-zinc-200 has-[:checked]:border-orange-400 has-[:checked]:text-orange-300 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-orange-400 has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-zinc-950"
               >
                 <input
                   type="checkbox"
@@ -317,7 +317,7 @@ function CocktailFormFields({
             {styleTags.map((tag) => (
               <label
                 key={tag.id}
-                className="flex cursor-pointer items-center gap-1.5 rounded-full border border-zinc-700 px-3 py-1 text-xs text-zinc-200 has-[:checked]:border-orange-400 has-[:checked]:text-orange-300"
+                className="flex cursor-pointer items-center gap-1.5 rounded-full border border-zinc-700 px-3 py-1 text-xs text-zinc-200 has-[:checked]:border-orange-400 has-[:checked]:text-orange-300 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-orange-400 has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-zinc-950"
               >
                 <input
                   type="checkbox"

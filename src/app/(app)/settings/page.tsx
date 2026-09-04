@@ -13,14 +13,14 @@ export default async function SettingsPage() {
       <h1 className="text-3xl font-semibold text-zinc-50">Settings</h1>
 
       <section className="mt-8">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500">
+        <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-400">
           Account
         </h2>
         <p className="mt-2 text-zinc-300">{user?.email}</p>
       </section>
 
       <section className="mt-10">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500">
+        <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-400">
           Your data
         </h2>
         <p className="mt-2 max-w-prose text-sm text-zinc-400">

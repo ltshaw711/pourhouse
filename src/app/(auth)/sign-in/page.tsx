@@ -39,7 +39,7 @@ export default async function SignInPage({
             name="email"
             required
             autoComplete="email"
-            className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-50 outline-none focus:border-orange-400"
+            className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-50 outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/40"
           />
         </label>
         <label className="flex flex-col gap-1 text-sm text-zinc-300">
@@ -49,7 +49,7 @@ export default async function SignInPage({
             name="password"
             required
             autoComplete="current-password"
-            className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-50 outline-none focus:border-orange-400"
+            className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-50 outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/40"
           />
         </label>
         <button
@@ -60,7 +60,7 @@ export default async function SignInPage({
         </button>
       </form>
 
-      <div className="flex items-center gap-3 text-xs text-zinc-500">
+      <div className="flex items-center gap-3 text-xs text-zinc-400">
         <span className="h-px flex-1 bg-zinc-800" />
         or
         <span className="h-px flex-1 bg-zinc-800" />
@@ -75,7 +75,7 @@ export default async function SignInPage({
             name="email"
             required
             autoComplete="email"
-            className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-50 outline-none focus:border-orange-400"
+            className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-50 outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/40"
           />
         </label>
         <button

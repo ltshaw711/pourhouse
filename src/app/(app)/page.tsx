@@ -109,7 +109,7 @@ export default async function HomePage({
       {haveIds.size > 0 && (
         <div className="mt-8">
           {results.length === 0 ? (
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-zinc-400">
               No matches yet — try selecting a few more ingredients, or
               browse the <Link href="/library" className="text-orange-400 hover:underline">full library</Link>.
             </p>

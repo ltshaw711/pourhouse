@@ -71,7 +71,7 @@ export default async function CocktailDetailPage({
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">
-      <Link href="/library" className="text-sm text-zinc-500 hover:text-zinc-300">
+      <Link href="/library" className="text-sm text-zinc-400 hover:text-zinc-300">
         ← Library
       </Link>
 
@@ -147,7 +147,7 @@ export default async function CocktailDetailPage({
       )}
 
       <section className="mt-8">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500">
+        <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-400">
           Ingredients
         </h2>
         <ul className="mt-3 flex flex-col gap-1.5">
@@ -168,7 +168,7 @@ export default async function CocktailDetailPage({
 
       {cocktail.instructions && (
         <section className="mt-8">
-          <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500">
+          <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-400">
             Instructions
           </h2>
           <p className="mt-3 whitespace-pre-wrap text-zinc-200">
@@ -180,19 +180,19 @@ export default async function CocktailDetailPage({
       <dl className="mt-8 grid grid-cols-2 gap-4 text-sm">
         {cocktail.garnish && (
           <div>
-            <dt className="text-zinc-500">Garnish</dt>
+            <dt className="text-zinc-400">Garnish</dt>
             <dd className="text-zinc-200">{cocktail.garnish}</dd>
           </div>
         )}
         {cocktail.glassware && (
           <div>
-            <dt className="text-zinc-500">Glassware</dt>
+            <dt className="text-zinc-400">Glassware</dt>
             <dd className="text-zinc-200">{cocktail.glassware}</dd>
           </div>
         )}
         {cocktail.source && (
           <div>
-            <dt className="text-zinc-500">Source</dt>
+            <dt className="text-zinc-400">Source</dt>
             <dd className="text-zinc-200">{cocktail.source}</dd>
           </div>
         )}
@@ -200,7 +200,7 @@ export default async function CocktailDetailPage({
 
       {relatedCocktails.length > 0 && (
         <section className="mt-10">
-          <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500">
+          <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-400">
             Related
           </h2>
           <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-4">
