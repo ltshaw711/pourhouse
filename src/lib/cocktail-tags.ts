@@ -70,6 +70,38 @@ export async function getRelatedCocktailIds(
     .map(([id]) => id);
 }
 
+/**
+ * Matches Apple Notes hashtags (already lowercase, e.g. "tequila") against
+ * the existing global primary/style tags by exact normalized name. Like
+ * ingredient linking, this never auto-creates a new tag from a guess —
+ * unmatched hashtags come back separately so the review screen can show
+ * them as informational rather than silently inventing taxonomy entries.
+ */
+export async function matchHashtagsToTagIds(
+  supabase: SupabaseClient<Database>,
+  hashtags: string[]
+): Promise<{ matchedTagIds: string[]; unmatchedHashtags: string[] }> {
+  if (hashtags.length === 0) return { matchedTagIds: [], unmatchedHashtags: [] };
+
+  const { data: tags } = await supabase
+    .from("tags")
+    .select("id, normalized_name")
+    .in("type", ["primary", "style"]);
+
+  const idByNormalizedName = new Map((tags ?? []).map((t) => [t.normalized_name, t.id]));
+
+  const matchedTagIds: string[] = [];
+  const unmatchedHashtags: string[] = [];
+
+  for (const hashtag of hashtags) {
+    const id = idByNormalizedName.get(hashtag.toLowerCase());
+    if (id) matchedTagIds.push(id);
+    else unmatchedHashtags.push(hashtag);
+  }
+
+  return { matchedTagIds, unmatchedHashtags };
+}
+
 /** Canonical primary/style tags for the add/edit form's checkboxes. */
 export async function getFormTags(supabase: SupabaseClient<Database>) {
   const { data: tags } = await supabase
