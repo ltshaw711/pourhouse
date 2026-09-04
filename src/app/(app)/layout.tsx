@@ -1,12 +1,20 @@
 import Link from "next/link";
+import { signOut } from "@/app/(auth)/actions";
+import { createClient } from "@/lib/supabase/server";
 
 // Shared shell for the authenticated app area — PRD §7 IA, §8 mobile-first
-// nav ("search and add actions remain visible on small screens").
-export default function AppLayout({
+// nav ("search and add actions remain visible on small screens"). The proxy
+// (src/proxy.ts) already guarantees a signed-in user reaches this layout.
+export default async function AppLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
     <div className="min-h-screen bg-zinc-950">
       <nav className="sticky top-0 z-10 flex items-center justify-between border-b border-zinc-800 bg-zinc-950/90 px-6 py-4 backdrop-blur">
@@ -29,6 +37,14 @@ export default function AppLayout({
           >
             Add cocktail
           </Link>
+          <span className="hidden text-zinc-600 sm:inline">
+            {user?.email}
+          </span>
+          <form action={signOut}>
+            <button type="submit" className="hover:text-zinc-50">
+              Sign out
+            </button>
+          </form>
         </div>
       </nav>
       {children}
