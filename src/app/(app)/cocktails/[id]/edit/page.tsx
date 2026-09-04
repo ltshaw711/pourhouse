@@ -5,16 +5,14 @@ import { getIngredientOptions } from "@/lib/ingredient-matching";
 import { updateCocktail } from "../../actions";
 import { CocktailForm } from "@/components/CocktailForm";
 
-// Edit cocktail — PRD §6.2 / §6.5
+// Edit cocktail — PRD §6.2 / §6.5. Validation errors render inside
+// CocktailForm itself via useActionState.
 export default async function EditCocktailPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ error?: string }>;
 }) {
   const { id } = await params;
-  const { error } = await searchParams;
   const supabase = await createClient();
 
   const { data: cocktail } = await supabase
@@ -42,12 +40,6 @@ export default async function EditCocktailPage({
   return (
     <main className="mx-auto max-w-2xl px-6 py-12">
       <h1 className="text-3xl font-semibold text-zinc-50">Edit cocktail</h1>
-
-      {error && (
-        <p className="mt-4 rounded-md border border-red-900 bg-red-950 px-3 py-2 text-sm text-red-300">
-          {error}
-        </p>
-      )}
 
       <div className="mt-8">
         <CocktailForm

@@ -4,6 +4,11 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { buildIngredientMatcher } from "@/lib/ingredient-matching";
+import {
+  findDuplicateCandidates,
+  type CocktailActionState,
+} from "@/lib/duplicate-detection";
+import type { CocktailFormValues } from "@/lib/cocktail-form-values";
 
 // Ingredient rows arrive as several same-named fields
 // (ingredient_display_name, ingredient_amount, ...) — the browser submits
@@ -42,8 +47,44 @@ function parseCocktailFields(formData: FormData) {
   };
 }
 
+// Mirrors whatever was actually submitted, so a validation error or
+// duplicate warning can hand it straight back to the form (see the
+// CocktailActionState doc comment for why that's necessary at all).
+function buildSubmittedValues(
+  formData: FormData,
+  fields: ReturnType<typeof parseCocktailFields>,
+  ingredientRows: ReturnType<typeof parseIngredientRows>
+): CocktailFormValues {
+  return {
+    name: fields.name,
+    instructions: fields.instructions ?? undefined,
+    garnish: fields.garnish ?? undefined,
+    glassware: fields.glassware ?? undefined,
+    source: fields.source ?? undefined,
+    favorite: fields.favorite,
+    ingredients: ingredientRows.map((row) => ({
+      display_name: row.display_name,
+      amount: row.amount,
+      unit: row.unit,
+      qualifier: row.qualifier,
+    })),
+    tagIds: formData.getAll("tag_ids").map(String),
+  };
+}
+
 // PRD §6.5: required fields are name and at least one ingredient line.
-export async function createCocktail(formData: FormData) {
+// PRD §6.2: warn on a likely duplicate (same normalized name + materially
+// similar ingredients) and let the user save anyway rather than silently
+// creating one, or silently blocking it.
+//
+// Takes (prevState, formData) so the form can drive it through
+// useActionState — a validation error or duplicate warning renders in
+// place, with the form's own field values still intact, instead of a
+// redirect that would otherwise discard everything the user typed.
+export async function createCocktail(
+  _prevState: CocktailActionState,
+  formData: FormData
+): Promise<CocktailActionState> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -54,15 +95,29 @@ export async function createCocktail(formData: FormData) {
   }
 
   const fields = parseCocktailFields(formData);
+  const ingredientRows = parseIngredientRows(formData);
+  const values = buildSubmittedValues(formData, fields, ingredientRows);
+
   if (!fields.name) {
-    redirect(`/cocktails/new?error=${encodeURIComponent("Cocktail name is required.")}`);
+    return { error: "Cocktail name is required.", values };
+  }
+  if (ingredientRows.length === 0) {
+    return { error: "Add at least one ingredient.", values };
   }
 
-  const ingredientRows = parseIngredientRows(formData);
-  if (ingredientRows.length === 0) {
-    redirect(
-      `/cocktails/new?error=${encodeURIComponent("Add at least one ingredient.")}`
+  // The "Save anyway" button submits confirm_duplicate=true as its own
+  // name/value pair (a native HTML feature: only the clicked submit
+  // button's name/value is included), skipping the check below.
+  if (formData.get("confirm_duplicate") !== "true") {
+    const duplicates = await findDuplicateCandidates(
+      supabase,
+      user.id,
+      fields.name,
+      ingredientRows.map((row) => row.display_name)
     );
+    if (duplicates.length > 0) {
+      return { duplicates, values };
+    }
   }
 
   // Links each line to the canonical ingredients table on an exact
@@ -81,11 +136,7 @@ export async function createCocktail(formData: FormData) {
     .single();
 
   if (cocktailError || !cocktail) {
-    redirect(
-      `/cocktails/new?error=${encodeURIComponent(
-        cocktailError?.message ?? "Could not save the cocktail."
-      )}`
-    );
+    return { error: cocktailError?.message ?? "Could not save the cocktail.", values };
   }
 
   const { error: ingredientsError } = await supabase
@@ -93,7 +144,7 @@ export async function createCocktail(formData: FormData) {
     .insert(linkedIngredientRows.map((row) => ({ ...row, cocktail_id: cocktail.id })));
 
   if (ingredientsError) {
-    redirect(`/cocktails/new?error=${encodeURIComponent(ingredientsError.message)}`);
+    return { error: ingredientsError.message, values };
   }
 
   const tagIds = formData.getAll("tag_ids").map(String);
@@ -103,7 +154,7 @@ export async function createCocktail(formData: FormData) {
       .insert(tagIds.map((tag_id) => ({ cocktail_id: cocktail.id, tag_id })));
 
     if (tagsError) {
-      redirect(`/cocktails/new?error=${encodeURIComponent(tagsError.message)}`);
+      return { error: tagsError.message, values };
     }
   }
 
@@ -112,8 +163,13 @@ export async function createCocktail(formData: FormData) {
 
 // Bound with the cocktail id (see the edit page) so the client only ever
 // submits the edited fields — RLS re-checks ownership on every statement
-// below regardless of what the client claims.
-export async function updateCocktail(cocktailId: string, formData: FormData) {
+// below regardless of what the client claims. No duplicate check here:
+// you're editing one specific cocktail, not creating a new competing one.
+export async function updateCocktail(
+  cocktailId: string,
+  _prevState: CocktailActionState,
+  formData: FormData
+): Promise<CocktailActionState> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -123,16 +179,15 @@ export async function updateCocktail(cocktailId: string, formData: FormData) {
     redirect("/sign-in");
   }
 
-  const editUrl = `/cocktails/${cocktailId}/edit`;
-
   const fields = parseCocktailFields(formData);
-  if (!fields.name) {
-    redirect(`${editUrl}?error=${encodeURIComponent("Cocktail name is required.")}`);
-  }
-
   const ingredientRows = parseIngredientRows(formData);
+  const values = buildSubmittedValues(formData, fields, ingredientRows);
+
+  if (!fields.name) {
+    return { error: "Cocktail name is required.", values };
+  }
   if (ingredientRows.length === 0) {
-    redirect(`${editUrl}?error=${encodeURIComponent("Add at least one ingredient.")}`);
+    return { error: "Add at least one ingredient.", values };
   }
 
   const matchIngredient = await buildIngredientMatcher(supabase);
@@ -147,7 +202,7 @@ export async function updateCocktail(cocktailId: string, formData: FormData) {
     .eq("id", cocktailId);
 
   if (updateError) {
-    redirect(`${editUrl}?error=${encodeURIComponent(updateError.message)}`);
+    return { error: updateError.message, values };
   }
 
   // Simplest correct approach for a personal-scale ingredient list: replace
@@ -158,7 +213,7 @@ export async function updateCocktail(cocktailId: string, formData: FormData) {
     .eq("cocktail_id", cocktailId);
 
   if (deleteIngredientsError) {
-    redirect(`${editUrl}?error=${encodeURIComponent(deleteIngredientsError.message)}`);
+    return { error: deleteIngredientsError.message, values };
   }
 
   const { error: ingredientsError } = await supabase
@@ -166,7 +221,7 @@ export async function updateCocktail(cocktailId: string, formData: FormData) {
     .insert(linkedIngredientRows.map((row) => ({ ...row, cocktail_id: cocktailId })));
 
   if (ingredientsError) {
-    redirect(`${editUrl}?error=${encodeURIComponent(ingredientsError.message)}`);
+    return { error: ingredientsError.message, values };
   }
 
   const { error: deleteTagsError } = await supabase
@@ -175,7 +230,7 @@ export async function updateCocktail(cocktailId: string, formData: FormData) {
     .eq("cocktail_id", cocktailId);
 
   if (deleteTagsError) {
-    redirect(`${editUrl}?error=${encodeURIComponent(deleteTagsError.message)}`);
+    return { error: deleteTagsError.message, values };
   }
 
   const tagIds = formData.getAll("tag_ids").map(String);
@@ -185,7 +240,7 @@ export async function updateCocktail(cocktailId: string, formData: FormData) {
       .insert(tagIds.map((tag_id) => ({ cocktail_id: cocktailId, tag_id })));
 
     if (tagsError) {
-      redirect(`${editUrl}?error=${encodeURIComponent(tagsError.message)}`);
+      return { error: tagsError.message, values };
     }
   }
 

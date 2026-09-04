@@ -1,6 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState, useState } from "react";
+import Link from "next/link";
+import type { CocktailActionState } from "@/lib/duplicate-detection";
+import type { CocktailFormValues } from "@/lib/cocktail-form-values";
 
 type Tag = { id: string; name: string };
 
@@ -20,21 +23,10 @@ function newRow(initial?: Omit<IngredientRow, "key">): IngredientRow {
 const fieldClass =
   "rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-50 outline-none focus:border-orange-400";
 
-export type CocktailFormInitial = {
-  name?: string;
-  instructions?: string;
-  garnish?: string;
-  glassware?: string;
-  source?: string;
-  favorite?: boolean;
-  ingredients?: {
-    display_name: string;
-    amount: number | null;
-    unit: string | null;
-    qualifier: string | null;
-  }[];
-  tagIds?: string[];
-};
+type CocktailFormAction = (
+  state: CocktailActionState,
+  formData: FormData
+) => CocktailActionState | Promise<CocktailActionState>;
 
 export function CocktailForm({
   action,
@@ -44,12 +36,123 @@ export function CocktailForm({
   initial,
   submitLabel = "Save cocktail",
 }: {
-  action: (formData: FormData) => void;
+  action: CocktailFormAction;
   primaryTags: Tag[];
   styleTags: Tag[];
   ingredientOptions: string[];
-  initial?: CocktailFormInitial;
+  initial?: CocktailFormValues;
   submitLabel?: string;
+}) {
+  // useActionState (not a plain <form action={action}>) so a validation
+  // error or duplicate warning renders in place rather than via redirect.
+  const [state, formAction, isPending] = useActionState(action, null);
+
+  // Next.js refreshes the route's Server Components after a Server Action
+  // completes, even without redirect() — and that refresh can reset this
+  // form's uncontrolled inputs. So instead of trusting the DOM to have
+  // preserved what the user typed, the action hands the submission back as
+  // `state.values`, and CocktailFormFields below gets remounted (via key)
+  // to pick it up fresh whenever a new result arrives. This is React's
+  // documented "adjust state during render" pattern, not an effect — no
+  // extra render or flicker.
+  const [prevState, setPrevState] = useState(state);
+  const [formInstance, setFormInstance] = useState(0);
+  if (state !== prevState) {
+    setPrevState(state);
+    setFormInstance((n) => n + 1);
+  }
+
+  const effectiveInitial = state?.values ?? initial;
+
+  return (
+    <form action={formAction} className="flex flex-col gap-8">
+      {state?.error && (
+        <p className="rounded-md border border-red-900 bg-red-950 px-3 py-2 text-sm text-red-300">
+          {state.error}
+        </p>
+      )}
+
+      {state?.duplicates && state.duplicates.length > 0 && (
+        <div className="flex flex-col gap-3 rounded-md border border-orange-900 bg-orange-950 px-4 py-3 text-sm text-orange-200">
+          <p className="font-medium">
+            This looks similar to {state.duplicates.length === 1 ? "a cocktail" : "cocktails"}{" "}
+            already in your library:
+          </p>
+          <ul className="flex flex-col gap-1">
+            {state.duplicates.map((dup) => (
+              <li key={dup.id} className="flex items-center justify-between gap-3">
+                <span>
+                  {dup.name}{" "}
+                  <span className="text-orange-400">
+                    ({dup.matchedIngredients}/{dup.totalIngredients} ingredients match)
+                  </span>
+                </span>
+                <Link
+                  href={`/cocktails/${dup.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="shrink-0 text-orange-300 underline hover:text-orange-200"
+                >
+                  View
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <p className="text-orange-300/80">
+            Change the name or ingredients above to treat this as a different
+            recipe, or save it anyway to keep both.
+          </p>
+        </div>
+      )}
+
+      <CocktailFormFields
+        key={formInstance}
+        initial={effectiveInitial}
+        primaryTags={primaryTags}
+        styleTags={styleTags}
+        ingredientOptions={ingredientOptions}
+      />
+
+      <div className="flex items-center gap-3">
+        <button
+          type="submit"
+          disabled={isPending}
+          className="self-start rounded-full bg-orange-500 px-5 py-2 text-sm font-medium text-zinc-950 hover:bg-orange-400 disabled:opacity-60"
+        >
+          {isPending ? "Saving…" : submitLabel}
+        </button>
+        {state?.duplicates && state.duplicates.length > 0 && (
+          // A submit button's own name/value is only included in the
+          // FormData when *that* button is what triggered the submit —
+          // no extra client state needed to distinguish the two actions.
+          <button
+            type="submit"
+            name="confirm_duplicate"
+            value="true"
+            disabled={isPending}
+            className="self-start rounded-full border border-zinc-700 px-4 py-2 text-sm text-zinc-200 hover:border-zinc-500 disabled:opacity-60"
+          >
+            Save anyway
+          </button>
+        )}
+      </div>
+    </form>
+  );
+}
+
+// Owns the ingredient-row list and every uncontrolled field. Remounted
+// (via key, from the parent) whenever the form needs to reset to a fresh
+// set of values instead of what's currently in the DOM.
+function CocktailFormFields({
+  initial,
+  primaryTags,
+  styleTags,
+  ingredientOptions,
+}: {
+  initial?: CocktailFormValues;
+  primaryTags: Tag[];
+  styleTags: Tag[];
+  ingredientOptions: string[];
 }) {
   // Only the row *count and identity* is client state — each row's text
   // stays an uncontrolled input (seeded via defaultValue), so typing never
@@ -70,7 +173,7 @@ export function CocktailForm({
   const selectedTagIds = new Set(initial?.tagIds ?? []);
 
   return (
-    <form action={action} className="flex flex-col gap-8">
+    <>
       <label className="flex flex-col gap-1 text-sm text-zinc-300">
         <span>
           Cocktail name <span className="text-orange-400">*</span>
@@ -249,13 +352,6 @@ export function CocktailForm({
         />
         Mark as favorite
       </label>
-
-      <button
-        type="submit"
-        className="self-start rounded-full bg-orange-500 px-5 py-2 text-sm font-medium text-zinc-950 hover:bg-orange-400"
-      >
-        {submitLabel}
-      </button>
-    </form>
+    </>
   );
 }
