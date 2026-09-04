@@ -9,6 +9,7 @@ import { buildIngredientMatcher } from "@/lib/ingredient-matching";
 import { findDuplicateCandidates } from "@/lib/duplicate-detection";
 import type { CocktailActionState } from "@/lib/duplicate-detection";
 import type { CocktailFormValues } from "@/lib/cocktail-form-values";
+import { uploadCocktailPhoto } from "@/lib/photo-upload";
 
 export type UploadState = { error?: string } | null;
 
@@ -235,6 +236,22 @@ export async function approveImportItem(
     .from("import_items")
     .update({ status: "imported", matched_cocktail_id: cocktail.id })
     .eq("id", itemId);
+
+  const photoFile = formData.get("photo");
+  if (photoFile instanceof File && photoFile.size > 0) {
+    const { url, error: photoError } = await uploadCocktailPhoto(
+      supabase,
+      user.id,
+      cocktail.id,
+      photoFile
+    );
+    if (!photoError && url) {
+      await supabase.from("cocktails").update({ photo_url: url }).eq("id", cocktail.id);
+    }
+    // A photo failure here shouldn't block the import — the cocktail and
+    // its item status are already committed; the user can attach a photo
+    // later from Edit.
+  }
 
   redirect(`/imports/${batchId}`);
 }

@@ -62,7 +62,12 @@ export function CocktailForm({
     setFormInstance((n) => n + 1);
   }
 
-  const effectiveInitial = state?.values ?? initial;
+  // A merge, not a full replace: state.values never carries photo_url (a
+  // File can't round-trip through server state, and the stored photo
+  // hasn't changed just because this submission failed), so a plain `??`
+  // here would make the photo preview vanish after any validation error
+  // or duplicate warning even though nothing about the photo changed.
+  const effectiveInitial = state?.values ? { ...initial, ...state.values } : initial;
 
   return (
     <form action={formAction} className="flex flex-col gap-8">
@@ -342,6 +347,39 @@ function CocktailFormFields({
           placeholder="e.g. Apple Notes, a book, a bar you loved"
         />
       </label>
+
+      <div className="flex flex-col gap-2">
+        <p className="text-sm text-zinc-300">Photo</p>
+        {initial?.photo_url && (
+          <div className="flex items-center gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element -- a
+                plain CSS background-image is used everywhere else photos
+                render (cards, detail hero); no next/image config exists
+                for the Storage domain, and this is a small fixed preview. */}
+            <img
+              src={initial.photo_url}
+              alt=""
+              className="h-16 w-16 rounded-md object-cover"
+            />
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-400">
+              <input
+                type="checkbox"
+                name="remove_photo"
+                value="true"
+                className="h-4 w-4 accent-red-500"
+              />
+              Remove photo
+            </label>
+          </div>
+        )}
+        <input
+          type="file"
+          name="photo"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          className="text-sm text-zinc-300 file:mr-3 file:rounded-full file:border-0 file:bg-zinc-800 file:px-3 file:py-1.5 file:text-sm file:text-zinc-200 hover:file:bg-zinc-700"
+        />
+        <p className="text-xs text-zinc-400">JPEG, PNG, WebP, or GIF — up to 5MB.</p>
+      </div>
 
       <label className="flex cursor-pointer items-center gap-2 py-2 text-sm text-zinc-300">
         <input

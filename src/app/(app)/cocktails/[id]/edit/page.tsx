@@ -55,6 +55,7 @@ export default async function EditCocktailPage({
             glassware: cocktail.glassware ?? undefined,
             source: cocktail.source ?? undefined,
             favorite: cocktail.favorite,
+            photo_url: cocktail.photo_url,
             ingredients: ingredients ?? [],
             tagIds: (tagsByCocktail[id] ?? []).map((t) => t.id),
           }}

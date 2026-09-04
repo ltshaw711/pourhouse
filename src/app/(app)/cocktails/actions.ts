@@ -9,6 +9,12 @@ import {
   type CocktailActionState,
 } from "@/lib/duplicate-detection";
 import type { CocktailFormValues } from "@/lib/cocktail-form-values";
+import { uploadCocktailPhoto, removeCocktailPhotos } from "@/lib/photo-upload";
+
+function getPhotoFile(formData: FormData): File | null {
+  const file = formData.get("photo");
+  return file instanceof File && file.size > 0 ? file : null;
+}
 
 // Ingredient rows arrive as several same-named fields
 // (ingredient_display_name, ingredient_amount, ...) — the browser submits
@@ -158,6 +164,30 @@ export async function createCocktail(
     }
   }
 
+  // Uploaded last, after everything else has committed: the cocktail
+  // already exists at this point, so a photo failure shouldn't block
+  // creation or risk a duplicate on retry — just note it and let the user
+  // try again from Edit.
+  const photoFile = getPhotoFile(formData);
+  if (photoFile) {
+    const { url, error: photoError } = await uploadCocktailPhoto(
+      supabase,
+      user.id,
+      cocktail.id,
+      photoFile
+    );
+    if (photoError) {
+      redirect(
+        `/cocktails/${cocktail.id}?error=${encodeURIComponent(
+          `Cocktail saved, but the photo couldn't be uploaded: ${photoError}. Try again from Edit.`
+        )}`
+      );
+    }
+    if (url) {
+      await supabase.from("cocktails").update({ photo_url: url }).eq("id", cocktail.id);
+    }
+  }
+
   redirect(`/cocktails/${cocktail.id}`);
 }
 
@@ -196,9 +226,30 @@ export async function updateCocktail(
     canonical_ingredient_id: matchIngredient(row.display_name),
   }));
 
+  // A newly-selected file always wins over "remove photo" if somehow both
+  // are set. removeCocktailPhotos before uploading means replacing a
+  // photo never leaves the old one orphaned in storage.
+  const photoFields: { photo_url?: string | null } = {};
+  const photoFile = getPhotoFile(formData);
+  if (photoFile) {
+    const { url, error: photoError } = await uploadCocktailPhoto(
+      supabase,
+      user.id,
+      cocktailId,
+      photoFile
+    );
+    if (photoError) {
+      return { error: `Photo couldn't be uploaded: ${photoError}`, values };
+    }
+    photoFields.photo_url = url;
+  } else if (formData.get("remove_photo") === "true") {
+    await removeCocktailPhotos(supabase, user.id, cocktailId);
+    photoFields.photo_url = null;
+  }
+
   const { error: updateError } = await supabase
     .from("cocktails")
-    .update(fields)
+    .update({ ...fields, ...photoFields })
     .eq("id", cocktailId);
 
   if (updateError) {
@@ -254,6 +305,16 @@ export async function updateCocktail(
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function deleteCocktail(cocktailId: string, _formData: FormData) {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // Storage isn't part of the Postgres FK graph, so deleting the row
+  // alone would leave any uploaded photo orphaned in the bucket.
+  if (user) {
+    await removeCocktailPhotos(supabase, user.id, cocktailId);
+  }
+
   const { error } = await supabase.from("cocktails").delete().eq("id", cocktailId);
 
   if (error) {

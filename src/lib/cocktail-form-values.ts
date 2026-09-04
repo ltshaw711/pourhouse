@@ -8,6 +8,7 @@ export type CocktailFormValues = {
   glassware?: string;
   source?: string;
   favorite?: boolean;
+  photo_url?: string | null;
   ingredients?: {
     display_name: string;
     amount: number | null;
