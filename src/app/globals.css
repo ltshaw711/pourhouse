@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+/*
+ * Pourhouse palette (PRD §8): deep charcoal/midnight background, warm
+ * citrus/orange and berry accents. Color augments labels; it is never the
+ * only signal — pair accent colors with text/icons, not fills alone.
+ */
+:root {
+  --background: #0a0a0c;
+  --foreground: #f4f4f5;
+  --color-citrus: #fb923c;
+  --color-berry: #db2777;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-citrus: var(--color-citrus);
+  --color-berry: var(--color-berry);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
