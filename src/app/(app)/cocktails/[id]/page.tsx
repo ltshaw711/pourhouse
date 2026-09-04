@@ -1,10 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getTagsByCocktail } from "@/lib/cocktail-tags";
+import {
+  getTagsByCocktail,
+  getRelatedCocktailIds,
+  type CocktailTag,
+} from "@/lib/cocktail-tags";
 import { gradientFor } from "@/lib/gradient";
 import { deleteCocktail, setFavorite } from "../actions";
 import { DeleteCocktailButton } from "./DeleteCocktailButton";
+import { CocktailCard } from "@/components/CocktailCard";
 
 // Cocktail detail — PRD §7 / §6.2
 export default async function CocktailDetailPage({
@@ -42,6 +47,27 @@ export default async function CocktailDetailPage({
 
   const deleteThisCocktail = deleteCocktail.bind(null, cocktail.id);
   const toggleFavorite = setFavorite.bind(null, cocktail.id, !cocktail.favorite);
+
+  const relatedIds = await getRelatedCocktailIds(
+    supabase,
+    id,
+    tags.map((t) => t.id)
+  );
+
+  let relatedCocktails: { id: string; name: string; photo_url: string | null }[] = [];
+  let tagsForRelated: Record<string, CocktailTag[]> = {};
+
+  if (relatedIds.length > 0) {
+    const [{ data: relatedRows }, relatedTagsByCocktail] = await Promise.all([
+      supabase.from("cocktails").select("id, name, photo_url").in("id", relatedIds),
+      getTagsByCocktail(supabase, relatedIds),
+    ]);
+    // Preserve the relevance order from getRelatedCocktailIds — the .in()
+    // query above doesn't guarantee it.
+    const byId = new Map((relatedRows ?? []).map((c) => [c.id, c]));
+    relatedCocktails = relatedIds.map((rid) => byId.get(rid)).filter((c) => c != null);
+    tagsForRelated = relatedTagsByCocktail;
+  }
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">
@@ -171,6 +197,29 @@ export default async function CocktailDetailPage({
           </div>
         )}
       </dl>
+
+      {relatedCocktails.length > 0 && (
+        <section className="mt-10">
+          <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-500">
+            Related
+          </h2>
+          <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {relatedCocktails.map((related) => {
+              const relatedTags = tagsForRelated[related.id] ?? [];
+              return (
+                <CocktailCard
+                  key={related.id}
+                  id={related.id}
+                  name={related.name}
+                  photoUrl={related.photo_url}
+                  primaryTags={relatedTags.filter((t) => t.type === "primary")}
+                  styleTags={relatedTags.filter((t) => t.type === "style")}
+                />
+              );
+            })}
+          </div>
+        </section>
+      )}
     </main>
   );
 }

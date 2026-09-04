@@ -4,13 +4,15 @@ import { createClient } from "@/lib/supabase/server";
 import { getTagsByCocktail, getFormTags } from "@/lib/cocktail-tags";
 import { CocktailCard } from "@/components/CocktailCard";
 import { LibraryFilters } from "./LibraryFilters";
+import { SurpriseMeButton } from "./SurpriseMeButton";
 
 type CocktailRow = { id: string; name: string; photo_url: string | null };
 
 // Library — PRD §7 / §6.2 / §6.3: browse, search by name, filter by tag
-// and favorites. List view and ingredient-on-hand search ("make now" /
-// "almost") come later — the latter needs recipes linked to canonical
-// ingredients, which the add/edit form doesn't capture yet.
+// and favorites, plus "Surprise me" from the current filtered set.
+// Ingredient-on-hand search ("make now" / "almost") lives on the Home
+// page instead — see src/app/(app)/page.tsx.
+// List view is still a follow-up.
 export default async function LibraryPage({
   searchParams,
 }: {
@@ -68,12 +70,15 @@ export default async function LibraryPage({
     <main className="mx-auto max-w-6xl px-6 py-12">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-3xl font-semibold text-zinc-50">Library</h1>
-        <Link
-          href="/cocktails/new"
-          className="rounded-full bg-orange-500 px-4 py-1.5 text-sm font-medium text-zinc-950 hover:bg-orange-400"
-        >
-          Add cocktail
-        </Link>
+        <div className="flex items-center gap-2">
+          <SurpriseMeButton cocktailIds={rows.map((c) => c.id)} />
+          <Link
+            href="/cocktails/new"
+            className="rounded-full bg-orange-500 px-4 py-1.5 text-sm font-medium text-zinc-950 hover:bg-orange-400"
+          >
+            Add cocktail
+          </Link>
+        </div>
       </div>
 
       {!collectionIsEmpty && (

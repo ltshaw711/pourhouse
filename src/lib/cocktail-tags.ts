@@ -39,6 +39,37 @@ export async function getTagsByCocktail(
   return tagsByCocktail;
 }
 
+/**
+ * PRD §6.3: related recipes based on shared primary/style tags, ranked by
+ * how many tags overlap (a shared primary spirit *and* style outranks
+ * either alone). Ownership is implicit — RLS already limits `cocktails` to
+ * the signed-in owner's rows.
+ */
+export async function getRelatedCocktailIds(
+  supabase: SupabaseClient<Database>,
+  cocktailId: string,
+  tagIds: string[],
+  limit = 4
+): Promise<string[]> {
+  if (tagIds.length === 0) return [];
+
+  const { data: rows } = await supabase
+    .from("cocktail_tags")
+    .select("cocktail_id")
+    .in("tag_id", tagIds)
+    .neq("cocktail_id", cocktailId);
+
+  const sharedTagCount = new Map<string, number>();
+  for (const row of rows ?? []) {
+    sharedTagCount.set(row.cocktail_id, (sharedTagCount.get(row.cocktail_id) ?? 0) + 1);
+  }
+
+  return [...sharedTagCount.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit)
+    .map(([id]) => id);
+}
+
 /** Canonical primary/style tags for the add/edit form's checkboxes. */
 export async function getFormTags(supabase: SupabaseClient<Database>) {
   const { data: tags } = await supabase
