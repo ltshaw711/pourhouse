@@ -3,6 +3,12 @@
  * is linked, regenerate from the live schema instead of hand-editing:
  *
  *   supabase gen types typescript --linked > src/types/database.ts
+ *
+ * Every table needs `Relationships: []` and the schema needs `Views` /
+ * `Functions` (even empty) — @supabase/postgrest-js's `GenericSchema`
+ * constraint requires them, and if a hand-written type doesn't satisfy it,
+ * the client silently infers every row as `never` instead of erroring
+ * where you'd notice.
  */
 
 export type CocktailStatus = "draft" | "published" | "archived";
@@ -14,6 +20,8 @@ export type ImportItemStatus =
   | "skipped"
   | "duplicate"
   | "imported";
+
+type NoRelationships = { Relationships: [] };
 
 export interface Database {
   public: {
@@ -30,7 +38,7 @@ export interface Database {
           email: string;
         };
         Update: Partial<Database["public"]["Tables"]["profiles"]["Row"]>;
-      };
+      } & NoRelationships;
       ingredients: {
         Row: {
           id: string;
@@ -45,7 +53,7 @@ export interface Database {
           canonical_name: string;
         };
         Update: Partial<Database["public"]["Tables"]["ingredients"]["Row"]>;
-      };
+      } & NoRelationships;
       tags: {
         Row: {
           id: string;
@@ -60,7 +68,7 @@ export interface Database {
           type: TagType;
         };
         Update: Partial<Database["public"]["Tables"]["tags"]["Row"]>;
-      };
+      } & NoRelationships;
       cocktails: {
         Row: {
           id: string;
@@ -83,7 +91,7 @@ export interface Database {
           name: string;
         };
         Update: Partial<Database["public"]["Tables"]["cocktails"]["Row"]>;
-      };
+      } & NoRelationships;
       recipe_ingredients: {
         Row: {
           id: string;
@@ -105,12 +113,12 @@ export interface Database {
         Update: Partial<
           Database["public"]["Tables"]["recipe_ingredients"]["Row"]
         >;
-      };
+      } & NoRelationships;
       cocktail_tags: {
         Row: { cocktail_id: string; tag_id: string };
         Insert: { cocktail_id: string; tag_id: string };
         Update: Partial<{ cocktail_id: string; tag_id: string }>;
-      };
+      } & NoRelationships;
       import_batches: {
         Row: {
           id: string;
@@ -127,7 +135,7 @@ export interface Database {
           owner_id: string;
         };
         Update: Partial<Database["public"]["Tables"]["import_batches"]["Row"]>;
-      };
+      } & NoRelationships;
       import_items: {
         Row: {
           id: string;
@@ -144,7 +152,9 @@ export interface Database {
           raw_source: string;
         };
         Update: Partial<Database["public"]["Tables"]["import_items"]["Row"]>;
-      };
+      } & NoRelationships;
     };
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
   };
 }
