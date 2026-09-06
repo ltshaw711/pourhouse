@@ -74,8 +74,26 @@ function stripHardBreak(line: string): string {
   return line.replace(/ {1,}$/, "");
 }
 
-function headingKey(line: string): string {
-  return stripMarkdownEmphasis(line).replace(/:$/, "").toLowerCase();
+// Matches a section label at the start of a line, tolerating both a
+// label-only line ("Ingredients", "## Directions") and a label sharing a
+// line with its first line of content ("Directions: Add all ingredients
+// to a shaker with ice.") — the latter is common in real exports and, if
+// only exact label lines are recognized, leaves the section switch never
+// happening: everything after silently keeps accumulating in whatever
+// section was already open.
+function matchSectionLabel(
+  line: string
+): { section: "ingredients" | "instructions"; rest: string } | null {
+  const cleaned = stripMarkdownEmphasis(line.replace(/^#{1,6}\s*/, ""));
+  for (const label of INGREDIENT_HEADINGS) {
+    const match = cleaned.match(new RegExp(`^${label}\\s*:?\\s*(.*)$`, "i"));
+    if (match) return { section: "ingredients", rest: match[1].trim() };
+  }
+  for (const label of INSTRUCTION_HEADINGS) {
+    const match = cleaned.match(new RegExp(`^${label}\\s*:?\\s*(.*)$`, "i"));
+    if (match) return { section: "instructions", rest: match[1].trim() };
+  }
+  return null;
 }
 
 function parseAmount(raw: string): number | null {
@@ -103,7 +121,9 @@ function parseAmount(raw: string): number | null {
     return (whole ? Number(whole) : 0) + UNICODE_FRACTIONS[frac];
   }
 
-  if (/^\d+(\.\d+)?$/.test(trimmed)) return Number(trimmed);
+  // "1.3", ".75" — a leading-dot decimal (no digit before the point) is
+  // common shorthand in real exports and shouldn't need the leading zero.
+  if (/^\d*\.?\d+$/.test(trimmed)) return Number(trimmed);
 
   return null;
 }
@@ -187,18 +207,29 @@ export function parseAppleNoteMarkdown(raw: string, fallbackTitle: string): Pars
       // heading. Only a real heading/hashtag/image line ends a section.
       continue;
     }
-    if (line.startsWith("#") || line.startsWith("!")) {
-      if (section !== "instructions") section = "none";
+
+    // Section labels show up in the wild as plain text ("Ingredients:"), as
+    // an actual Notes heading/subheading ("## Directions"), and sharing a
+    // line with their own first line of content ("Directions: Add all
+    // ingredients to a shaker with ice."). matchSectionLabel handles all
+    // three and is checked *before* the generic "#"/"!" bail-out below —
+    // otherwise "## Directions" is swallowed as an unrecognized heading and
+    // the section switch never happens.
+    const labelMatch = matchSectionLabel(line);
+    if (labelMatch) {
+      section = labelMatch.section;
+      if (labelMatch.rest) {
+        if (section === "ingredients") {
+          ingredients.push(parseIngredientLine(labelMatch.rest));
+        } else {
+          instructionLines.push(labelMatch.rest);
+        }
+      }
       continue;
     }
 
-    const key = headingKey(line);
-    if (INGREDIENT_HEADINGS.has(key)) {
-      section = "ingredients";
-      continue;
-    }
-    if (INSTRUCTION_HEADINGS.has(key)) {
-      section = "instructions";
+    if (line.startsWith("#") || line.startsWith("!")) {
+      if (section !== "instructions") section = "none";
       continue;
     }
 
