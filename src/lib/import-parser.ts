@@ -181,7 +181,10 @@ export function parseAppleNoteMarkdown(raw: string, fallbackTitle: string): Pars
 
   for (const line of lines) {
     if (!line) {
-      if (section === "ingredients") section = "none";
+      // A blank line is just a paragraph break, not a section boundary —
+      // Apple's export hard-breaks "Ingredients:" onto its own paragraph,
+      // so the bulleted list always starts one blank line *after* the
+      // heading. Only a real heading/hashtag/image line ends a section.
       continue;
     }
     if (line.startsWith("#") || line.startsWith("!")) {
