@@ -3,8 +3,10 @@ import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getTagsByCocktail, getFormTags } from "@/lib/cocktail-tags";
 import { CocktailCard } from "@/components/CocktailCard";
+import { CocktailListRow } from "@/components/CocktailListRow";
 import { LibraryFilters } from "./LibraryFilters";
 import { SurpriseMeButton } from "./SurpriseMeButton";
+import { ViewToggle } from "./ViewToggle";
 
 type CocktailRow = { id: string; name: string; photo_url: string | null };
 
@@ -12,13 +14,13 @@ type CocktailRow = { id: string; name: string; photo_url: string | null };
 // and favorites, plus "Surprise me" from the current filtered set.
 // Ingredient-on-hand search ("make now" / "almost") lives on the Home
 // page instead — see src/app/(app)/page.tsx.
-// List view is still a follow-up.
 export default async function LibraryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; tags?: string; favorite?: string }>;
+  searchParams: Promise<{ q?: string; tags?: string; favorite?: string; view?: string }>;
 }) {
-  const { q, tags, favorite } = await searchParams;
+  const { q, tags, favorite, view: viewParam } = await searchParams;
+  const view: "grid" | "list" = viewParam === "list" ? "list" : "grid";
   const supabase = await createClient();
 
   const selectedTagIds = tags ? tags.split(",").filter(Boolean) : [];
@@ -71,6 +73,7 @@ export default async function LibraryPage({
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-3xl font-semibold text-zinc-50">Library</h1>
         <div className="flex items-center gap-2">
+          {!collectionIsEmpty && <ViewToggle view={view} />}
           <SurpriseMeButton cocktailIds={rows.map((c) => c.id)} />
           <Link
             href="/cocktails/new"
@@ -109,6 +112,22 @@ export default async function LibraryPage({
           <p className="text-sm text-zinc-400">
             Try a different search or clear filters to see everything.
           </p>
+        </div>
+      ) : view === "list" ? (
+        <div className="mt-8 flex flex-col gap-2">
+          {rows.map((cocktail) => {
+            const cocktailTags = tagsByCocktail[cocktail.id] ?? [];
+            return (
+              <CocktailListRow
+                key={cocktail.id}
+                id={cocktail.id}
+                name={cocktail.name}
+                photoUrl={cocktail.photo_url}
+                primaryTags={cocktailTags.filter((t) => t.type === "primary")}
+                styleTags={cocktailTags.filter((t) => t.type === "style")}
+              />
+            );
+          })}
         </div>
       ) : (
         <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
