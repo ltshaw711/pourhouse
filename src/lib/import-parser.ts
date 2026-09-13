@@ -66,8 +66,18 @@ const UNICODE_FRACTIONS: Record<string, number> = {
   "⅞": 0.875,
 };
 
+// Apple's export uses three inline styles found in real notes:
+// "****text****" for a Heading paragraph, "++text++" for underline, and
+// a plain "[text](url)" markdown link (e.g. an ingredient the user linked
+// to a recipe page). All three are stripped down to their visible text —
+// an ingredient/instruction line should never show raw markdown syntax.
 function stripMarkdownEmphasis(text: string): string {
-  return text.replace(/\*{1,4}/g, "").replace(/[ \t]+/g, " ").trim();
+  return text
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/\+{1,2}/g, "")
+    .replace(/\*{1,4}/g, "")
+    .replace(/[ \t]+/g, " ")
+    .trim();
 }
 
 function stripHardBreak(line: string): string {
