@@ -1,6 +1,8 @@
 "use server";
 
+import { randomUUID } from "crypto";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -52,4 +54,47 @@ export async function deleteAccount(
       "Your account and all its data have been permanently deleted."
     )}`
   );
+}
+
+// Public read-only share link (code-only feature, not in the PRD). The
+// token itself is the access control — RLS still locks every table down
+// to the owner as before; a handful of SECURITY DEFINER functions
+// (supabase/migrations/0005_public_share.sql) do the token check and
+// hand back only read-only fields to /shared/[token]. Regenerating swaps
+// in a fresh token, which immediately invalidates any previously-shared
+// link — no separate "revoke" bookkeeping needed for that case.
+export async function regenerateShareLink() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/sign-in");
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ share_token: randomUUID() })
+    .eq("id", user.id);
+
+  if (error) {
+    redirect(`/settings?error=${encodeURIComponent(error.message)}`);
+  }
+  revalidatePath("/settings");
+}
+
+export async function disableSharing() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/sign-in");
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ share_token: null })
+    .eq("id", user.id);
+
+  if (error) {
+    redirect(`/settings?error=${encodeURIComponent(error.message)}`);
+  }
+  revalidatePath("/settings");
 }

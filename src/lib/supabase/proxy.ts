@@ -4,7 +4,11 @@ import { NextResponse, type NextRequest } from "next/server";
 // Routes reachable while signed out. Everything else requires a session —
 // this is the actual gate that protects the app; the database's Row-Level
 // Security policies are the backstop if a route ever gets this wrong.
-const PUBLIC_PATHS = ["/sign-in", "/sign-up", "/auth"];
+// "/shared" is the public read-only link (PRD-adjacent, code-only
+// feature) — it does its own access control via a per-account token
+// resolved through SECURITY DEFINER functions, not a session, so it must
+// stay reachable while signed out.
+const PUBLIC_PATHS = ["/sign-in", "/sign-up", "/auth", "/shared"];
 
 function isPublicPath(pathname: string) {
   return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));

@@ -31,6 +31,7 @@ export interface Database {
           id: string;
           email: string;
           display_name: string | null;
+          share_token: string | null;
           created_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["profiles"]["Row"]> & {
@@ -155,6 +156,55 @@ export interface Database {
       } & NoRelationships;
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      shared_owner_name: {
+        Args: { p_token: string };
+        Returns: string;
+      };
+      shared_cocktails: {
+        Args: { p_token: string };
+        Returns: {
+          id: string;
+          name: string;
+          photo_url: string | null;
+          favorite: boolean;
+        }[];
+      };
+      shared_cocktail_tags: {
+        Args: { p_token: string };
+        Returns: {
+          cocktail_id: string;
+          tag_id: string;
+          tag_name: string;
+          tag_type: TagType;
+        }[];
+      };
+      shared_cocktail: {
+        Args: { p_token: string; p_cocktail_id: string };
+        Returns: {
+          id: string;
+          name: string;
+          description: string | null;
+          instructions: string | null;
+          garnish: string | null;
+          glassware: string | null;
+          source: string | null;
+          favorite: boolean;
+          photo_url: string | null;
+        }[];
+      };
+      shared_cocktail_ingredients: {
+        Args: { p_token: string; p_cocktail_id: string };
+        Returns: {
+          id: string;
+          display_name: string;
+          amount: number | null;
+          unit: string | null;
+          qualifier: string | null;
+          note: string | null;
+          position: number;
+        }[];
+      };
+    };
   };
 }

@@ -1,17 +1,33 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { DeleteAccountForm } from "./DeleteAccountForm";
+import { ShareLinkSection } from "./ShareLinkSection";
 
 // Settings — PRD §7 / §11: profile, data export, and account deletion.
-export default async function SettingsPage() {
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const { data: profile } = user
+    ? await supabase.from("profiles").select("share_token").eq("id", user.id).single()
+    : { data: null };
+
   return (
     <main className="mx-auto max-w-2xl px-6 py-12">
       <h1 className="text-3xl font-semibold text-zinc-50">Settings</h1>
+
+      {error && (
+        <p className="mt-4 rounded-md border border-red-900 bg-red-950 px-3 py-2 text-sm text-red-300">
+          {error}
+        </p>
+      )}
 
       <section className="mt-8">
         <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-400">
@@ -35,6 +51,13 @@ export default async function SettingsPage() {
         >
           Manage ingredients
         </Link>
+      </section>
+
+      <section className="mt-10">
+        <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-400">
+          Public share link
+        </h2>
+        <ShareLinkSection shareToken={profile?.share_token ?? null} />
       </section>
 
       <section className="mt-10">
