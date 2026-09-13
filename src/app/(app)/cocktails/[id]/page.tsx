@@ -9,6 +9,7 @@ import {
 import { gradientFor } from "@/lib/gradient";
 import { deleteCocktail, setFavorite } from "../actions";
 import { DeleteCocktailButton } from "./DeleteCocktailButton";
+import { BackToLibraryLink } from "./BackToLibraryLink";
 import { CocktailCard } from "@/components/CocktailCard";
 
 // Cocktail detail — PRD §7 / §6.2
@@ -71,9 +72,7 @@ export default async function CocktailDetailPage({
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">
-      <Link href="/library" className="text-sm text-zinc-400 hover:text-zinc-300">
-        ← Library
-      </Link>
+      <BackToLibraryLink />
 
       {error && (
         <p className="mt-4 rounded-md border border-red-900 bg-red-950 px-3 py-2 text-sm text-red-300">
