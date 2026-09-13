@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 type Ingredient = { id: string; canonical_name: string };
@@ -55,6 +56,12 @@ export function HaveIngredientsPicker({ ingredients }: { ingredients: Ingredient
             {ingredient.canonical_name}
           </button>
         ))}
+        <Link
+          href="/settings/ingredients"
+          className="rounded-full border border-dashed border-zinc-700 px-2.5 py-1 text-xs text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
+        >
+          + Add ingredient
+        </Link>
       </div>
     </div>
   );
