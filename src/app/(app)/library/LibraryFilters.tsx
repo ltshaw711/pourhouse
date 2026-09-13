@@ -26,6 +26,7 @@ export function LibraryFilters({
     (searchParams.get("tags") ?? "").split(",").filter(Boolean)
   );
   const favoriteOnly = searchParams.get("favorite") === "true";
+  const sort = searchParams.get("sort") ?? "newest";
   const hasFilters = q.trim().length > 0 || selectedTagIds.size > 0 || favoriteOnly;
 
   function updateParams(mutate: (params: URLSearchParams) => void) {
@@ -63,6 +64,13 @@ export function LibraryFilters({
     });
   }
 
+  function handleSortChange(value: string) {
+    updateParams((params) => {
+      if (value === "newest") params.delete("sort");
+      else params.set("sort", value);
+    });
+  }
+
   function clearFilters() {
     setQ("");
     router.replace(pathname);
@@ -91,6 +99,19 @@ export function LibraryFilters({
         >
           {favoriteOnly ? "★ Favorites only" : "☆ Favorites only"}
         </button>
+        <label className="flex shrink-0 items-center gap-1.5 text-xs text-zinc-400">
+          Sort
+          <select
+            value={sort}
+            onChange={(e) => handleSortChange(e.target.value)}
+            aria-label="Sort cocktails"
+            className="rounded-full border border-zinc-700 bg-zinc-900 px-2.5 py-1.5 text-xs text-zinc-200 outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/40"
+          >
+            <option value="newest">Newest first</option>
+            <option value="name-asc">Name A to Z</option>
+            <option value="name-desc">Name Z to A</option>
+          </select>
+        </label>
         {hasFilters && (
           <button
             type="button"

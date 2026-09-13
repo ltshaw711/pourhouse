@@ -17,18 +17,31 @@ type CocktailRow = { id: string; name: string; photo_url: string | null };
 export default async function LibraryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; tags?: string; favorite?: string; view?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    tags?: string;
+    favorite?: string;
+    view?: string;
+    sort?: string;
+  }>;
 }) {
-  const { q, tags, favorite, view: viewParam } = await searchParams;
+  const { q, tags, favorite, view: viewParam, sort: sortParam } = await searchParams;
   const view: "grid" | "list" = viewParam === "list" ? "list" : "grid";
   const supabase = await createClient();
 
   const selectedTagIds = tags ? tags.split(",").filter(Boolean) : [];
 
-  let cocktailQuery = supabase
-    .from("cocktails")
-    .select("id, name, photo_url")
-    .order("created_at", { ascending: false });
+  let cocktailQuery = supabase.from("cocktails").select("id, name, photo_url");
+
+  // normalized_name (lowercased/trimmed) rather than name, so A-Z/Z-A
+  // sorting is consistent regardless of capitalization.
+  if (sortParam === "name-asc") {
+    cocktailQuery = cocktailQuery.order("normalized_name", { ascending: true });
+  } else if (sortParam === "name-desc") {
+    cocktailQuery = cocktailQuery.order("normalized_name", { ascending: false });
+  } else {
+    cocktailQuery = cocktailQuery.order("created_at", { ascending: false });
+  }
 
   if (q?.trim()) {
     cocktailQuery = cocktailQuery.ilike("name", `%${q.trim()}%`);
