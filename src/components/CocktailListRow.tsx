@@ -11,16 +11,20 @@ export function CocktailListRow({
   photoUrl,
   primaryTags,
   styleTags,
+  hrefBase = "/cocktails",
 }: {
   id: string;
   name: string;
   photoUrl: string | null;
   primaryTags: RowTag[];
   styleTags: RowTag[];
+  /** Lets the public /shared view link into its own read-only detail
+   *  route instead of the authenticated /cocktails one. */
+  hrefBase?: string;
 }) {
   return (
     <Link
-      href={`/cocktails/${id}`}
+      href={`${hrefBase}/${id}`}
       className="group flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900 p-2 pr-4 transition hover:border-zinc-600"
     >
       <div

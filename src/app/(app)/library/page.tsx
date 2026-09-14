@@ -6,7 +6,7 @@ import { CocktailCard } from "@/components/CocktailCard";
 import { CocktailListRow } from "@/components/CocktailListRow";
 import { LibraryFilters } from "./LibraryFilters";
 import { SurpriseMeButton } from "./SurpriseMeButton";
-import { ViewToggle } from "./ViewToggle";
+import { ViewToggle } from "@/components/ViewToggle";
 
 type CocktailRow = { id: string; name: string; photo_url: string | null };
 
