@@ -55,6 +55,23 @@ export default async function SettingsPage({
 
       <section className="mt-10">
         <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-400">
+          Tags
+        </h2>
+        <p className="mt-2 max-w-prose text-sm text-zinc-400">
+          Manage primary tags (the spirit badge on every card, and what
+          &ldquo;Sort by primary ingredient&rdquo; groups by) and style
+          tags.
+        </p>
+        <Link
+          href="/settings/tags"
+          className="mt-3 inline-block rounded-full border border-zinc-700 px-4 py-1.5 text-sm text-zinc-200 hover:border-zinc-500"
+        >
+          Manage tags
+        </Link>
+      </section>
+
+      <section className="mt-10">
+        <h2 className="text-sm font-medium uppercase tracking-wide text-zinc-400">
           Public share link
         </h2>
         <ShareLinkSection shareToken={profile?.share_token ?? null} />
