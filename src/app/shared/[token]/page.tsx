@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { sortByPrimaryIngredient } from "@/lib/cocktail-tags";
 import { CocktailCard } from "@/components/CocktailCard";
 import { CocktailListRow } from "@/components/CocktailListRow";
 import { ViewToggle } from "@/components/ViewToggle";
@@ -14,9 +15,10 @@ import { SortControl } from "@/components/SortControl";
 // View and sort mirror the authenticated Library page (same
 // ViewToggle/SortControl components, same ?view=/?sort= params) so a
 // read-only visitor gets the same browsing controls a signed-in owner
-// has. shared_cocktails() always returns newest-first; name sorting is
-// done here in JS on the already-fetched (unpaginated) list rather than
-// adding another DB round trip or RPC parameter for it.
+// has. shared_cocktails() always returns newest-first; name and
+// primary-ingredient sorting are both done here in JS on the
+// already-fetched (unpaginated) list rather than adding another DB
+// round trip or RPC parameter for either.
 export default async function SharedLibraryPage({
   params,
   searchParams,
@@ -55,6 +57,8 @@ export default async function SharedLibraryPage({
       a.name.toLowerCase().localeCompare(b.name.toLowerCase())
     );
     rows = sortParam === "name-desc" ? sorted.reverse() : sorted;
+  } else if (sortParam === "primary") {
+    rows = sortByPrimaryIngredient(rows, tagsByCocktail);
   }
 
   return (

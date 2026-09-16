@@ -34,6 +34,7 @@ export function SortControl() {
         <option value="newest">Newest first</option>
         <option value="name-asc">Name A to Z</option>
         <option value="name-desc">Name Z to A</option>
+        <option value="primary">Primary ingredient</option>
       </select>
     </label>
   );

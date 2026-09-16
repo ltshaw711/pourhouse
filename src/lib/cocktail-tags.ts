@@ -102,6 +102,41 @@ export async function matchHashtagsToTagIds(
   return { matchedTagIds, unmatchedHashtags };
 }
 
+/**
+ * Sorts cocktails by primary spirit tag (Bourbon, Gin, Rum, ...) — the
+ * same taxonomy already shown as the orange badge on every card and used
+ * for tag filtering, rather than the literal first ingredient line,
+ * which isn't a reliable "primary ingredient" signal (import order,
+ * garnish lines, edits). A cocktail can carry more than one primary tag
+ * (a multi-spirit drink tagged both Bourbon and Mezcal, say) — the
+ * alphabetically-first one is used as its sort key, deterministically.
+ * Cocktails with no primary tag at all sort to the end. Ties (same
+ * primary tag, or both untagged) break by cocktail name. Done in JS on
+ * an already-fetched list rather than in SQL — the tag is a join away
+ * from `cocktails`, not a plain column to `ORDER BY`.
+ */
+export function sortByPrimaryIngredient<T extends { id: string; name: string }>(
+  rows: T[],
+  tagsByCocktail: Record<string, { name: string; type: string }[]>
+): T[] {
+  function primaryTagName(id: string): string | null {
+    const names = (tagsByCocktail[id] ?? [])
+      .filter((t) => t.type === "primary")
+      .map((t) => t.name)
+      .sort((a, b) => a.localeCompare(b));
+    return names[0] ?? null;
+  }
+
+  return [...rows].sort((a, b) => {
+    const pa = primaryTagName(a.id);
+    const pb = primaryTagName(b.id);
+    if (pa === pb) return a.name.localeCompare(b.name);
+    if (pa === null) return 1;
+    if (pb === null) return -1;
+    return pa.localeCompare(pb) || a.name.localeCompare(b.name);
+  });
+}
+
 /** Canonical primary/style tags for the add/edit form's checkboxes. */
 export async function getFormTags(supabase: SupabaseClient<Database>) {
   const { data: tags } = await supabase

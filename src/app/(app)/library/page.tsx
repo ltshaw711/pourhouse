@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
-import { getTagsByCocktail, getFormTags } from "@/lib/cocktail-tags";
+import { getTagsByCocktail, getFormTags, sortByPrimaryIngredient } from "@/lib/cocktail-tags";
 import { CocktailCard } from "@/components/CocktailCard";
 import { CocktailListRow } from "@/components/CocktailListRow";
 import { LibraryFilters } from "./LibraryFilters";
@@ -75,6 +75,12 @@ export default async function LibraryPage({
     rows.map((c) => c.id)
   );
   const { primaryTags, styleTags } = await getFormTags(supabase);
+
+  // Primary-tag sort needs the tag lookup above first — it's not a plain
+  // column the DB query can ORDER BY directly.
+  if (sortParam === "primary") {
+    rows = sortByPrimaryIngredient(rows, tagsByCocktail);
+  }
 
   const hasActiveFilters = Boolean(q?.trim() || selectedTagIds.length > 0 || favorite === "true");
   // Distinguish "you have nothing yet" from "nothing matches these filters"
