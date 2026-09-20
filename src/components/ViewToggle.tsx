@@ -1,11 +1,15 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { VIEW_COOKIE, PREF_COOKIE_MAX_AGE } from "@/lib/library-prefs";
 
 // PRD follow-up: grid view (default) shows a big thumbnail per card; list
 // view trades that for a small thumbnail so more cocktails fit on screen
 // at once. Reflected in the URL like every other library control, so a
-// bookmarked/shared library URL keeps its view too.
+// bookmarked/shared library URL keeps its view too — and written to a
+// cookie so a *fresh* navigation (the nav bar's "Library" link, which
+// carries no query string) still remembers it; the page that reads
+// VIEW_COOKIE server-side is what actually restores it.
 export function ViewToggle({ view }: { view: "grid" | "list" }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -13,8 +17,12 @@ export function ViewToggle({ view }: { view: "grid" | "list" }) {
 
   function setView(next: "grid" | "list") {
     const params = new URLSearchParams(searchParams.toString());
-    if (next === "grid") params.delete("view");
-    else params.set("view", next);
+    // Set explicitly even for "grid" (the default) rather than deleting
+    // the param — otherwise choosing grid produces a param-less URL that
+    // immediately redirects again via the cookie fallback, one wasted
+    // round trip for no reason.
+    params.set("view", next);
+    document.cookie = `${VIEW_COOKIE}=${next}; path=/; max-age=${PREF_COOKIE_MAX_AGE}; samesite=lax`;
     const qs = params.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname);
   }

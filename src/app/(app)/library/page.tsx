@@ -1,7 +1,10 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getTagsByCocktail, getFormTags, sortByPrimaryIngredient } from "@/lib/cocktail-tags";
+import { VIEW_COOKIE, SORT_COOKIE, isLibraryView, isLibrarySort } from "@/lib/library-prefs";
 import { CocktailCard } from "@/components/CocktailCard";
 import { CocktailListRow } from "@/components/CocktailListRow";
 import { LibraryFilters } from "./LibraryFilters";
@@ -26,6 +29,32 @@ export default async function LibraryPage({
   }>;
 }) {
   const { q, tags, favorite, view: viewParam, sort: sortParam } = await searchParams;
+
+  // A URL with no explicit view/sort could mean "never chosen" or could
+  // mean "arrived via a plain link" (the nav bar's "Library", a fresh
+  // sign-in redirect) — the visitor's last choice, ViewToggle/
+  // SortControl already wrote it to a cookie, so fall back to that
+  // before defaulting to grid/newest. Redirecting once here, before any
+  // data fetch or render, means no flash of the wrong view first; once
+  // redirected the URL carries the param, so this doesn't loop.
+  if (viewParam === undefined || sortParam === undefined) {
+    const cookieStore = await cookies();
+    const cookieView = cookieStore.get(VIEW_COOKIE)?.value;
+    const cookieSort = cookieStore.get(SORT_COOKIE)?.value;
+    const fallbackView = viewParam === undefined && isLibraryView(cookieView) ? cookieView : undefined;
+    const fallbackSort = sortParam === undefined && isLibrarySort(cookieSort) ? cookieSort : undefined;
+
+    if (fallbackView || fallbackSort) {
+      const params = new URLSearchParams();
+      if (q) params.set("q", q);
+      if (tags) params.set("tags", tags);
+      if (favorite) params.set("favorite", favorite);
+      params.set("view", fallbackView ?? viewParam ?? "grid");
+      params.set("sort", fallbackSort ?? sortParam ?? "newest");
+      redirect(`/library?${params.toString()}`);
+    }
+  }
+
   const view: "grid" | "list" = viewParam === "list" ? "list" : "grid";
   const supabase = await createClient();
 
