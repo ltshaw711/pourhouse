@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { gradientFor } from "@/lib/gradient";
+import { CocktailPhoto } from "@/components/CocktailPhoto";
 
 // Read-only counterpart to (app)/cocktails/[id] — same layout, no
 // favorite/edit/delete controls. A cocktailId that doesn't exist, isn't
@@ -40,14 +40,7 @@ export default async function SharedCocktailPage({
         ← Library
       </Link>
 
-      <div
-        className={`mt-4 aspect-[3/1] rounded-xl bg-gradient-to-br ${gradientFor(cocktail.id)} ${
-          cocktail.photo_url ? "bg-cover bg-center" : ""
-        }`}
-        style={
-          cocktail.photo_url ? { backgroundImage: `url(${cocktail.photo_url})` } : undefined
-        }
-      />
+      <CocktailPhoto id={cocktail.id} name={cocktail.name} photoUrl={cocktail.photo_url} />
 
       <div className="mt-6">
         <h1 className="text-3xl font-semibold text-zinc-50">

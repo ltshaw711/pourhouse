@@ -6,11 +6,11 @@ import {
   getRelatedCocktailIds,
   type CocktailTag,
 } from "@/lib/cocktail-tags";
-import { gradientFor } from "@/lib/gradient";
 import { deleteCocktail, setFavorite } from "../actions";
 import { DeleteCocktailButton } from "./DeleteCocktailButton";
 import { BackToLibraryLink } from "./BackToLibraryLink";
 import { CocktailCard } from "@/components/CocktailCard";
+import { CocktailPhoto } from "@/components/CocktailPhoto";
 
 // Cocktail detail — PRD §7 / §6.2
 export default async function CocktailDetailPage({
@@ -80,14 +80,7 @@ export default async function CocktailDetailPage({
         </p>
       )}
 
-      <div
-        className={`mt-4 aspect-[3/1] rounded-xl bg-gradient-to-br ${gradientFor(cocktail.id)} ${
-          cocktail.photo_url ? "bg-cover bg-center" : ""
-        }`}
-        style={
-          cocktail.photo_url ? { backgroundImage: `url(${cocktail.photo_url})` } : undefined
-        }
-      />
+      <CocktailPhoto id={cocktail.id} name={cocktail.name} photoUrl={cocktail.photo_url} />
 
       <div className="mt-6 flex flex-wrap items-start justify-between gap-4">
         <div>
