@@ -8,7 +8,7 @@ import {
 } from "@/lib/cocktail-tags";
 import { deleteCocktail, setFavorite } from "../actions";
 import { DeleteCocktailButton } from "./DeleteCocktailButton";
-import { BackToLibraryLink } from "./BackToLibraryLink";
+import { BackToLibraryLink } from "@/components/BackToLibraryLink";
 import { CocktailCard } from "@/components/CocktailCard";
 import { CocktailPhoto } from "@/components/CocktailPhoto";
 

@@ -7,6 +7,7 @@ import { CocktailListRow } from "@/components/CocktailListRow";
 import { ViewToggle } from "@/components/ViewToggle";
 import { SortControl } from "@/components/SortControl";
 import { StylePicker } from "@/components/StylePicker";
+import { RememberLibraryVisit } from "@/components/RememberLibraryVisit";
 
 // Public read-only library — no session, no RLS-visible table access.
 // Everything comes through SECURITY DEFINER functions
@@ -91,6 +92,7 @@ export default async function SharedLibraryPage({
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-12">
+      <RememberLibraryVisit storageKey={`pourhouse:visited-shared-library:${token}`} />
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-sm font-medium uppercase tracking-wide text-orange-400">

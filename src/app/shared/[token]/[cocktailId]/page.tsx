@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { CocktailPhoto } from "@/components/CocktailPhoto";
+import { BackToLibraryLink } from "@/components/BackToLibraryLink";
 
 // Read-only counterpart to (app)/cocktails/[id] — same layout, no
 // favorite/edit/delete controls. A cocktailId that doesn't exist, isn't
@@ -36,9 +36,10 @@ export default async function SharedCocktailPage({
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">
-      <Link href={`/shared/${token}`} className="text-sm text-zinc-400 hover:text-zinc-300">
-        ← Library
-      </Link>
+      <BackToLibraryLink
+        fallbackHref={`/shared/${token}`}
+        visitedKey={`pourhouse:visited-shared-library:${token}`}
+      />
 
       <CocktailPhoto id={cocktail.id} name={cocktail.name} photoUrl={cocktail.photo_url} />
 
