@@ -45,6 +45,64 @@ export async function buildIngredientMatcher(
   return (displayName: string) => byNormalizedName.get(normalize(displayName)) ?? null;
 }
 
+export type IngredientSearchResult = {
+  id: string;
+  name: string;
+  status: "make-now" | "almost";
+  matchedCount: number;
+  missingNames: string[];
+};
+
+/**
+ * The ingredient-on-hand search as a pure function over data already in
+ * hand — used by the public share view, which gets its rows from
+ * token-scoped RPCs rather than RLS-scoped table queries. Same rules as
+ * the signed-in Home page: classifyIngredientMatch per recipe, zero
+ * overlap is not a result, "Make now" ranks above "Almost", then more
+ * matched ingredients first. `allowedCocktailIds` is the style-filter
+ * intersection (null = no style filter, don't constrain).
+ */
+export function rankIngredientMatches({
+  requirements,
+  haveIds,
+  cocktailNameById,
+  ingredientNameById,
+  allowedCocktailIds,
+}: {
+  requirements: { cocktail_id: string; canonical_ingredient_id: string }[];
+  haveIds: Set<string>;
+  cocktailNameById: Map<string, string>;
+  ingredientNameById: Map<string, string>;
+  allowedCocktailIds: Set<string> | null;
+}): IngredientSearchResult[] {
+  const requiredByCocktail = new Map<string, Set<string>>();
+  for (const row of requirements) {
+    if (allowedCocktailIds && !allowedCocktailIds.has(row.cocktail_id)) continue;
+    const required = requiredByCocktail.get(row.cocktail_id) ?? new Set<string>();
+    required.add(row.canonical_ingredient_id);
+    requiredByCocktail.set(row.cocktail_id, required);
+  }
+
+  const results: IngredientSearchResult[] = [];
+  for (const [cocktailId, required] of requiredByCocktail) {
+    const name = cocktailNameById.get(cocktailId);
+    const match = classifyIngredientMatch(required, haveIds);
+    if (!name || !match) continue;
+    results.push({
+      id: cocktailId,
+      name,
+      status: match.status,
+      matchedCount: match.matchedCount,
+      missingNames: match.missingIds.map((id) => ingredientNameById.get(id) ?? "unknown"),
+    });
+  }
+
+  return results.sort((a, b) => {
+    if (a.status !== b.status) return a.status === "make-now" ? -1 : 1;
+    return b.matchedCount - a.matchedCount || a.name.localeCompare(b.name);
+  });
+}
+
 export type IngredientMatch = {
   status: "make-now" | "almost";
   matchedCount: number;

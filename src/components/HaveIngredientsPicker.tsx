@@ -6,7 +6,17 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 type Ingredient = { id: string; canonical_name: string };
 
 // PRD §6.3: ingredient chips instead of typing, reflected in the URL.
-export function HaveIngredientsPicker({ ingredients }: { ingredients: Ingredient[] }) {
+// Shared by the signed-in Home page and the public /shared view. The
+// "+ Add ingredient" shortcut only renders when `addIngredientHref` is
+// passed — it points at the signed-in settings page, which a read-only
+// visitor can't use (and shouldn't be shown a dead link to).
+export function HaveIngredientsPicker({
+  ingredients,
+  addIngredientHref,
+}: {
+  ingredients: Ingredient[];
+  addIngredientHref?: string;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -56,12 +66,14 @@ export function HaveIngredientsPicker({ ingredients }: { ingredients: Ingredient
             {ingredient.canonical_name}
           </button>
         ))}
-        <Link
-          href="/settings/ingredients"
-          className="rounded-full border border-dashed border-zinc-700 px-2.5 py-1 text-xs text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
-        >
-          + Add ingredient
-        </Link>
+        {addIngredientHref && (
+          <Link
+            href={addIngredientHref}
+            className="rounded-full border border-dashed border-zinc-700 px-2.5 py-1 text-xs text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
+          >
+            + Add ingredient
+          </Link>
+        )}
       </div>
     </div>
   );

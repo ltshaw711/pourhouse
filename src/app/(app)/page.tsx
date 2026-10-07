@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { classifyIngredientMatch } from "@/lib/ingredient-matching";
-import { HaveIngredientsPicker } from "./HaveIngredientsPicker";
+import { HaveIngredientsPicker } from "@/components/HaveIngredientsPicker";
 import { StylePicker } from "@/components/StylePicker";
 
 type Result = {
@@ -146,7 +146,10 @@ export default async function HomePage({
 
       <div className="mt-8">
         <Suspense fallback={null}>
-          <HaveIngredientsPicker ingredients={ingredients} />
+          <HaveIngredientsPicker
+            ingredients={ingredients}
+            addIngredientHref="/settings/ingredients"
+          />
         </Suspense>
       </div>
 

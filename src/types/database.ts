@@ -193,6 +193,14 @@ export interface Database {
           photo_url: string | null;
         }[];
       };
+      shared_ingredients: {
+        Args: { p_token: string };
+        Returns: { id: string; canonical_name: string }[];
+      };
+      shared_recipe_requirements: {
+        Args: { p_token: string };
+        Returns: { cocktail_id: string; canonical_ingredient_id: string }[];
+      };
       shared_cocktail_ingredients: {
         Args: { p_token: string; p_cocktail_id: string };
         Returns: {
