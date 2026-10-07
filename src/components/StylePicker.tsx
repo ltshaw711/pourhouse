@@ -8,7 +8,9 @@ type Style = { id: string; name: string };
 // (?styles=) and its own "Clear", so picking/clearing one never touches
 // the other. Multiple styles are OR'd together (a drink needs any one
 // of the selected styles, not all of them), matching the Library tag
-// filter's existing semantics for consistency across the app.
+// filter's existing semantics for consistency across the app. Shared by
+// the signed-in Home page and the public /shared view — it only reads
+// the current pathname and ?styles=, so it works on either URL.
 export function StylePicker({ styles }: { styles: Style[] }) {
   const router = useRouter();
   const pathname = usePathname();

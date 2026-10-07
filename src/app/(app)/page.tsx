@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { classifyIngredientMatch } from "@/lib/ingredient-matching";
 import { HaveIngredientsPicker } from "./HaveIngredientsPicker";
-import { StylePicker } from "./StylePicker";
+import { StylePicker } from "@/components/StylePicker";
 
 type Result = {
   id: string;
